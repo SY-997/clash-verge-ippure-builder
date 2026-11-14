@@ -2,8 +2,15 @@ name: Build Clash Verge Rev IP Pure
 
 on:
   workflow_dispatch:
+    inputs:
+      reuse_run_id:
+        description: 'Reuse the initial compiled build (run 43545407292)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
+  actions: read
   contents: read
 
 jobs:
@@ -213,7 +220,56 @@ jobs:
       - name: Copy Tauri overlay
         run: node -e "require('node:fs').copyFileSync('builder/tauri.ci.conf.json', 'source/src-tauri/tauri.ci.conf.json')"
 
+      - name: Check reusable build
+        if: ${{ inputs.reuse_run_id != '' }}
+        shell: pwsh
+        env:
+          REUSE_RUN_ID: ${{ inputs.reuse_run_id }}
+        run: |
+          if ($env:REUSE_RUN_ID -ne '43545407292') {
+            throw 'Only the verified initial build can be reused.'
+          }
+          $patchHash = (Get-FileHash -LiteralPath 'builder/patches/ippure-core.patch' -Algorithm SHA256).Hash
+          if ($patchHash -cne '29200A06F74628D1CD80DE9362D4A9F5B283D54B34AADAE0D679D4A8166883DE') {
+            throw 'The current patch does not match the reusable build.'
+          }
+
+      - name: Download reusable installer
+        if: ${{ inputs.reuse_run_id != '' }}
+        uses: actions/download-artifact@v7
+        with:
+          name: clash-verge-ippure-2.5.10-windows-x64
+          path: reused-installer
+          run-id: ${{ inputs.reuse_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Restore compiled application
+        if: ${{ inputs.reuse_run_id != '' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installers = @(Get-ChildItem -LiteralPath 'reused-installer' -Filter '*setup.exe' -File)
+          if ($installers.Count -ne 1) {
+            throw "Expected one reusable installer; found $($installers.Count)."
+          }
+          $sevenZip = Get-Command '7z.exe' -ErrorAction SilentlyContinue
+          $sevenZipPath = if ($sevenZip) { $sevenZip.Source } else { Join-Path $env:ProgramFiles '7-Zip/7z.exe' }
+          $extractPath = Join-Path $env:RUNNER_TEMP 'ippure-reused-application'
+          New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+          & $sevenZipPath e -y -r "-o$extractPath" $installers[0].FullName 'clash-verge.exe'
+          if ($LASTEXITCODE -ne 0) {
+            throw "7-Zip extraction failed with exit code $LASTEXITCODE."
+          }
+          $application = Join-Path $extractPath 'clash-verge.exe'
+          if (-not (Test-Path -LiteralPath $application -PathType Leaf)) {
+            throw 'The reusable installer does not contain clash-verge.exe.'
+          }
+          $targetPath = 'source/target/x86_64-pc-windows-msvc/release'
+          New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+          Copy-Item -LiteralPath $application -Destination (Join-Path $targetPath 'clash-verge.exe')
+
       - name: Build NSIS installer
+        if: ${{ inputs.reuse_run_id == '' }}
         uses: tauri-apps/tauri-action@v1.0.0
         env:
           NODE_OPTIONS: --max_old_space_size=4096
@@ -221,6 +277,56 @@ jobs:
           projectPath: source
           tauriScript: pnpm
           args: --target x86_64-pc-windows-msvc --config src-tauri/tauri.ci.conf.json
+
+      - name: Bundle reusable application
+        if: ${{ inputs.reuse_run_id != '' }}
+        working-directory: source
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: pnpm tauri bundle --target x86_64-pc-windows-msvc --config src-tauri/tauri.ci.conf.json --bundles nsis --no-binary-patching
+
+      - name: Verify installer contents
+        shell: pwsh
+        env:
+          REUSE_RUN_ID: ${{ inputs.reuse_run_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installerPath = 'source/target/x86_64-pc-windows-msvc/release/bundle/nsis'
+          $installers = @(Get-ChildItem -LiteralPath $installerPath -Filter '*setup.exe' -File)
+          if ($installers.Count -ne 1) {
+            throw "Expected one generated installer; found $($installers.Count)."
+          }
+          $sevenZip = Get-Command '7z.exe' -ErrorAction SilentlyContinue
+          $sevenZipPath = if ($sevenZip) { $sevenZip.Source } else { Join-Path $env:ProgramFiles '7-Zip/7z.exe' }
+          $extractPath = Join-Path $env:RUNNER_TEMP 'ippure-verified-installer'
+          New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+          & $sevenZipPath x -y "-o$extractPath" $installers[0].FullName
+          if ($LASTEXITCODE -ne 0) {
+            throw "7-Zip extraction failed with exit code $LASTEXITCODE."
+          }
+          $expectedFiles = @{
+            'verge-mihomo.exe' = '0B4C7353057A78DE8A09DB445351AADEC7D72A4F48ADC7D99691F3C5FF74D3DA'
+            'verge-mihomo-alpha.exe' = '1404A25B977251C90693543DA6E83320355EE2FE9D24D2727F20751329A127C9'
+            'Country.mmdb' = 'F604D54EB3D5A6FDAB9747C0C62F0B489134B6D94DF9E9EB20F1C5E2A537DBFA'
+            'ASN.mmdb' = '3169B9EA7DAD762F6837B95408DADC1173F47BE33BE2D83B6C90E67A57A7EB2E'
+            'geoip.dat' = '06C1D50D0013AF57FFE78C5AF93F0DC6AA998890F3EE231393816F9117810C4A'
+            'geosite.dat' = '3FEE9B84EFCE1EF142974A18B48B9B12D2CF8CCB8017DD4EC16E3906BCB7DA69'
+          }
+          if ($env:REUSE_RUN_ID) {
+            $originalApp = Join-Path $env:RUNNER_TEMP 'ippure-reused-application/clash-verge.exe'
+            $expectedFiles['clash-verge.exe'] = (Get-FileHash -LiteralPath $originalApp -Algorithm SHA256).Hash
+          }
+          foreach ($name in $expectedFiles.Keys) {
+            $files = @(Get-ChildItem -LiteralPath $extractPath -Filter $name -File -Recurse)
+            if ($files.Count -ne 1) {
+              throw "Expected one $name in the generated installer; found $($files.Count)."
+            }
+            $actualHash = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash
+            if ($actualHash -cne $expectedFiles[$name]) {
+              throw "SHA-256 mismatch for $name in the generated installer."
+            }
+            Write-Host "Verified $name in the generated installer."
+          }
 
       - name: Upload installer
         uses: actions/upload-artifact@v7
