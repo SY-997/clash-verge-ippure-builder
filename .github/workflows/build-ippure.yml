@@ -1,0 +1,184 @@
+name: Build Clash Verge Rev IP Pure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Configure Git line endings
+        run: git config --global core.autocrlf false
+
+      - name: Checkout builder
+        uses: actions/checkout@v7
+        with:
+          path: builder
+          persist-credentials: false
+
+      - name: Checkout official source
+        uses: actions/checkout@v7
+        with:
+          repository: clash-verge-rev/clash-verge-rev
+          ref: c83f7ad529c7c9cb3d2d54a0955ef8c1b22a411b
+          path: source
+          persist-credentials: false
+
+      - name: Apply IP Pure patch
+        run: |
+          git -C source apply --check ../builder/patches/ippure-core.patch
+          git -C source apply ../builder/patches/ippure-core.patch
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.99.1
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.16.1
+          run_install: false
+
+      - name: Install dependencies
+        working-directory: source
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore v2.5.10 Mihomo cores
+        working-directory: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $temporaryRoot = Join-Path $env:RUNNER_TEMP 'clash-verge-2.5.10-cores'
+          $installerPath = Join-Path $temporaryRoot 'Clash.Verge_2.5.10_x64-setup.exe'
+          $extractPath = Join-Path $temporaryRoot 'extracted'
+          $sidecarPath = Join-Path $PWD 'src-tauri/sidecar'
+          New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
+          New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
+          New-Item -ItemType Directory -Path $sidecarPath -Force | Out-Null
+
+          $sevenZipCommand = Get-Command '7z.exe' -ErrorAction SilentlyContinue
+          $sevenZipPath = if ($sevenZipCommand) { $sevenZipCommand.Source } else { $null }
+          if (-not $sevenZipPath) {
+            $sevenZipCandidates = @()
+            if ($env:ProgramFiles) {
+              $sevenZipCandidates += Join-Path $env:ProgramFiles '7-Zip/7z.exe'
+            }
+            if (${env:ProgramFiles(x86)}) {
+              $sevenZipCandidates += Join-Path ${env:ProgramFiles(x86)} '7-Zip/7z.exe'
+            }
+            foreach ($candidate in $sevenZipCandidates) {
+              if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+                $sevenZipPath = $candidate
+                break
+              }
+            }
+          }
+          if (-not $sevenZipPath -or -not (Test-Path -LiteralPath $sevenZipPath -PathType Leaf)) {
+            throw '7-Zip executable was not found on the Windows runner.'
+          }
+
+          $installerUrl = 'https://github.com/clash-verge-rev/clash-verge-rev/releases/download/v2.5.10/Clash.Verge_2.5.10_x64-setup.exe'
+          Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+          if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf) -or (Get-Item -LiteralPath $installerPath).Length -eq 0) {
+            throw 'The official v2.5.10 x64 installer was not downloaded.'
+          }
+
+          $arguments = @('x', '-y', "`"$installerPath`"", "-o`"$extractPath`"")
+          $extractProcess = Start-Process -FilePath $sevenZipPath -ArgumentList ($arguments -join ' ') -Wait -PassThru -NoNewWindow
+          if ($extractProcess.ExitCode -ne 0) {
+            throw "7-Zip extraction failed with exit code $($extractProcess.ExitCode)."
+          }
+
+          $expectedCores = @(
+            @{
+              SourceName = 'verge-mihomo.exe'
+              TargetName = 'verge-mihomo-x86_64-pc-windows-msvc.exe'
+              Sha256 = '0B4C7353057A78DE8A09DB445351AADEC7D72A4F48ADC7D99691F3C5FF74D3DA'
+            },
+            @{
+              SourceName = 'verge-mihomo-alpha.exe'
+              TargetName = 'verge-mihomo-alpha-x86_64-pc-windows-msvc.exe'
+              Sha256 = '1404A25B977251C90693543DA6E83320355EE2FE9D24D2727F20751329A127C9'
+            }
+          )
+
+          $verifiedCores = foreach ($core in $expectedCores) {
+            $matches = @(Get-ChildItem -LiteralPath $extractPath -Filter $core.SourceName -File -Recurse -ErrorAction Stop)
+            if ($matches.Count -ne 1) {
+              throw "Expected exactly one $($core.SourceName) in the extracted installer; found $($matches.Count)."
+            }
+            $actualHash = (Get-FileHash -LiteralPath $matches[0].FullName -Algorithm SHA256).Hash
+            if ($actualHash -cne $core.Sha256) {
+              throw "SHA-256 mismatch for $($core.SourceName): expected $($core.Sha256), got $actualHash."
+            }
+            [pscustomobject]@{
+              SourcePath = $matches[0].FullName
+              TargetPath = Join-Path $sidecarPath $core.TargetName
+              SourceName = $core.SourceName
+              Sha256 = $core.Sha256
+            }
+          }
+
+          foreach ($core in $verifiedCores) {
+            Copy-Item -LiteralPath $core.SourcePath -Destination $core.TargetPath -Force
+            $copiedHash = (Get-FileHash -LiteralPath $core.TargetPath -Algorithm SHA256).Hash
+            if ($copiedHash -cne $core.Sha256) {
+              throw "SHA-256 mismatch after staging $($core.SourceName): expected $($core.Sha256), got $copiedHash."
+            }
+            Write-Host "Verified and staged $($core.SourceName): $copiedHash"
+          }
+
+      - name: Prepare Windows resources
+        working-directory: source
+        run: pnpm run prebuild x86_64-pc-windows-msvc
+
+      - name: Verify generated core hashes
+        working-directory: source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $hashFile = 'src-tauri/packages/windows/core-hashes.nsh'
+          if (-not (Test-Path -LiteralPath $hashFile -PathType Leaf)) {
+            throw "Prebuild did not generate $hashFile."
+          }
+          $contents = Get-Content -LiteralPath $hashFile -Raw
+          $expectedDefinitions = @(
+            '!define MIHOMO_SHA256 "0b4c7353057a78de8a09db445351aadec7d72a4f48adc7d99691f3c5ff74d3da"',
+            '!define MIHOMO_ALPHA_SHA256 "1404a25b977251c90693543da6e83320355ee2fe9d24d2727f20751329a127c9"'
+          )
+          foreach ($definition in $expectedDefinitions) {
+            if (-not $contents.Contains($definition)) {
+              throw "Generated core hash file is missing the expected definition: $definition"
+            }
+          }
+          Write-Host 'Generated NSIS core hashes match the verified v2.5.10 cores.'
+
+      - name: Copy Tauri overlay
+        run: node -e "require('node:fs').copyFileSync('builder/tauri.ci.conf.json', 'source/src-tauri/tauri.ci.conf.json')"
+
+      - name: Build NSIS installer
+        uses: tauri-apps/tauri-action@v1.0.0
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+        with:
+          projectPath: source
+          tauriScript: pnpm
+          args: --target x86_64-pc-windows-msvc --config src-tauri/tauri.ci.conf.json
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: clash-verge-ippure-2.5.10-windows-x64
+          path: source/target/x86_64-pc-windows-msvc/release/bundle/nsis/*setup.exe
+          if-no-files-found: error
+          retention-days: 7

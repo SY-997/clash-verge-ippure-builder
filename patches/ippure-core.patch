@@ -1,0 +1,394 @@
+diff --git a/src/components/home/ip-info-card.tsx b/src/components/home/ip-info-card.tsx
+index 6df77a1..53dae5d 100644
+--- a/src/components/home/ip-info-card.tsx
++++ b/src/components/home/ip-info-card.tsx
+@@ -342,6 +342,14 @@ export const IpInfoCard = () => {
+                 label={t('home.components.ipInfo.labels.asn')}
+                 value={ipInfo?.asn ? `AS${ipInfo.asn}` : 'N/A'}
+               />
++              <InfoItem
++                label={t('home.components.ipInfo.labels.riskScore')}
++                value={
++                  typeof ipInfo?.fraudScore === 'number'
++                    ? String(ipInfo.fraudScore)
++                    : t('home.components.ipInfo.labels.unknown')
++                }
++              />
+             </Box>
+ 
+             <Box sx={{ width: '60%', overflow: 'auto' }}>
+diff --git a/src/locales/ar/home.json b/src/locales/ar/home.json
+index 4bf0359..35d9fe3 100644
+--- a/src/locales/ar/home.json
++++ b/src/locales/ar/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "Location",
+         "timezone": "Timezone",
++        "riskScore": "درجة المخاطر",
+         "autoRefresh": "Auto refresh",
+         "unknown": "Unknown"
+       },
+diff --git a/src/locales/de/home.json b/src/locales/de/home.json
+index 4bcaf99..808a619 100644
+--- a/src/locales/de/home.json
++++ b/src/locales/de/home.json
+@@ -79,6 +79,7 @@
+         "org": "Organisation",
+         "location": "Standort",
+         "timezone": "Zeitzone",
++        "riskScore": "Risikowert",
+         "autoRefresh": "Automatische Aktualisierung",
+         "unknown": "Unbekannt"
+       },
+diff --git a/src/locales/en/home.json b/src/locales/en/home.json
+index e4ec3b6..a2ae51c 100644
+--- a/src/locales/en/home.json
++++ b/src/locales/en/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "Location",
+         "timezone": "Timezone",
++        "riskScore": "Risk score",
+         "autoRefresh": "Auto refresh",
+         "unknown": "Unknown"
+       },
+diff --git a/src/locales/es/home.json b/src/locales/es/home.json
+index 5c36116..2748e8f 100644
+--- a/src/locales/es/home.json
++++ b/src/locales/es/home.json
+@@ -79,6 +79,7 @@
+         "org": "Organización",
+         "location": "Ubicación",
+         "timezone": "Zona horaria",
++        "riskScore": "Puntuación de riesgo",
+         "autoRefresh": "Actualización automática",
+         "unknown": "Desconocido"
+       },
+diff --git a/src/locales/fa/home.json b/src/locales/fa/home.json
+index 468522a..04ef4c4 100644
+--- a/src/locales/fa/home.json
++++ b/src/locales/fa/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "Location",
+         "timezone": "Timezone",
++        "riskScore": "امتیاز ریسک",
+         "autoRefresh": "Auto refresh",
+         "unknown": "Unknown"
+       },
+diff --git a/src/locales/id/home.json b/src/locales/id/home.json
+index 5bfb7dc..3cf332e 100644
+--- a/src/locales/id/home.json
++++ b/src/locales/id/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "Location",
+         "timezone": "Timezone",
++        "riskScore": "Skor risiko",
+         "autoRefresh": "Auto refresh",
+         "unknown": "Unknown"
+       },
+diff --git a/src/locales/jp/home.json b/src/locales/jp/home.json
+index 96f8b42..a7facdc 100644
+--- a/src/locales/jp/home.json
++++ b/src/locales/jp/home.json
+@@ -79,6 +79,7 @@
+         "org": "組織",
+         "location": "位置",
+         "timezone": "タイムゾーン",
++        "riskScore": "リスク値",
+         "autoRefresh": "自動更新",
+         "unknown": "不明"
+       },
+diff --git a/src/locales/ko/home.json b/src/locales/ko/home.json
+index d818523..41c2c19 100644
+--- a/src/locales/ko/home.json
++++ b/src/locales/ko/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "위치",
+         "timezone": "시간대",
++        "riskScore": "위험 점수",
+         "autoRefresh": "자동 새로고침",
+         "unknown": "알 수 없음"
+       },
+diff --git a/src/locales/pt/home.json b/src/locales/pt/home.json
+index 8df3dcc..7718790 100644
+--- a/src/locales/pt/home.json
++++ b/src/locales/pt/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "Localização",
+         "timezone": "Fuso horário",
++        "riskScore": "Pontuação de risco",
+         "autoRefresh": "Atualização automática",
+         "unknown": "Desconhecido"
+       },
+diff --git a/src/locales/ru/home.json b/src/locales/ru/home.json
+index d46e3d2..2b8387d 100644
+--- a/src/locales/ru/home.json
++++ b/src/locales/ru/home.json
+@@ -79,6 +79,7 @@
+         "org": "Организация",
+         "location": "Местоположение",
+         "timezone": "Часовой пояс",
++        "riskScore": "Оценка риска",
+         "autoRefresh": "Автообновление через",
+         "unknown": "Неизвестно"
+       },
+diff --git a/src/locales/tr/home.json b/src/locales/tr/home.json
+index 845b2e9..e1fe983 100644
+--- a/src/locales/tr/home.json
++++ b/src/locales/tr/home.json
+@@ -79,6 +79,7 @@
+         "org": "Kuruluş",
+         "location": "Konum",
+         "timezone": "Saat Dilimi",
++        "riskScore": "Risk puanı",
+         "autoRefresh": "Otomatik yenile",
+         "unknown": "Bilinmiyor"
+       },
+diff --git a/src/locales/tt/home.json b/src/locales/tt/home.json
+index b04be2a..bdbeb8d 100644
+--- a/src/locales/tt/home.json
++++ b/src/locales/tt/home.json
+@@ -79,6 +79,7 @@
+         "org": "ORG",
+         "location": "Location",
+         "timezone": "Timezone",
++        "riskScore": "Риск бәясе",
+         "autoRefresh": "Auto refresh",
+         "unknown": "Unknown"
+       },
+diff --git a/src/locales/zh/home.json b/src/locales/zh/home.json
+index dd73294..cdc64eb 100644
+--- a/src/locales/zh/home.json
++++ b/src/locales/zh/home.json
+@@ -79,6 +79,7 @@
+         "org": "组织",
+         "location": "位置",
+         "timezone": "时区",
++        "riskScore": "风险值",
+         "autoRefresh": "自动刷新",
+         "unknown": "未知"
+       },
+diff --git a/src/locales/zhtw/home.json b/src/locales/zhtw/home.json
+index 3c7c4be..1cde1ef 100644
+--- a/src/locales/zhtw/home.json
++++ b/src/locales/zhtw/home.json
+@@ -79,6 +79,7 @@
+         "org": "組織",
+         "location": "位置",
+         "timezone": "時區",
++        "riskScore": "風險值",
+         "autoRefresh": "自動重整",
+         "unknown": "未知"
+       },
+diff --git a/src/services/api.ts b/src/services/api.ts
+index b7f6641..d75fed2 100644
+--- a/src/services/api.ts
++++ b/src/services/api.ts
+@@ -29,111 +29,51 @@ interface IpInfo {
+   longitude: number
+   latitude: number
+   timezone: string
++  fraudScore?: number
++}
++
++interface IpPureResponse {
++  ip?: string
++  countryCode?: string
++  country?: string
++  region?: string
++  city?: string
++  asOrganization?: string
++  asn?: number
++  longitude?: string | number | null
++  latitude?: string | number | null
++  timezone?: string
++  fraudScore?: number | null
+ }
+ 
+ // IP检测服务配置
+ interface ServiceConfig {
+   url: string
+-  mapping: (data: any) => IpInfo
++  mapping: (data: IpPureResponse) => IpInfo
+   timeout?: number // 保留timeout字段（如有需要）
+ }
+ 
+-// 可用的IP检测服务列表及字段映射
++// IPPure does not provide a separate ISP field, so both existing labels use its AS organization.
+ const IP_CHECK_SERVICES: ServiceConfig[] = [
+   {
+-    url: 'https://api.ip.sb/geoip',
+-    mapping: (data) => ({
+-      ip: data.ip || '',
+-      country_code: data.country_code || '',
+-      country: data.country || '',
+-      region: data.region || '',
+-      city: data.city || '',
+-      organization: data.organization || data.isp || '',
+-      asn: data.asn || 0,
+-      asn_organization: data.asn_organization || '',
+-      longitude: data.longitude || 0,
+-      latitude: data.latitude || 0,
+-      timezone: data.timezone || '',
+-    }),
+-  },
+-  {
+-    url: 'https://ipapi.co/json',
+-    mapping: (data) => ({
+-      ip: data.ip || '',
+-      country_code: data.country_code || '',
+-      country: data.country_name || '',
+-      region: data.region || '',
+-      city: data.city || '',
+-      organization: data.org || '',
+-      asn: data.asn ? parseInt(data.asn.replace('AS', '')) : 0,
+-      asn_organization: data.org || '',
+-      longitude: data.longitude || 0,
+-      latitude: data.latitude || 0,
+-      timezone: data.timezone || '',
+-    }),
+-  },
+-  {
+-    url: 'https://api.ipapi.is/',
+-    mapping: (data) => ({
+-      ip: data.ip || '',
+-      country_code: data.location?.country_code || '',
+-      country: data.location?.country || '',
+-      region: data.location?.state || '',
+-      city: data.location?.city || '',
+-      organization: data.asn?.org || data.company?.name || '',
+-      asn: data.asn?.asn || 0,
+-      asn_organization: data.asn?.org || '',
+-      longitude: data.location?.longitude || 0,
+-      latitude: data.location?.latitude || 0,
+-      timezone: data.location?.timezone || '',
+-    }),
+-  },
+-  {
+-    url: 'https://ipwho.is/',
+-    mapping: (data) => ({
+-      ip: data.ip || '',
+-      country_code: data.country_code || '',
+-      country: data.country || '',
+-      region: data.region || '',
+-      city: data.city || '',
+-      organization: data.connection?.org || data.connection?.isp || '',
+-      asn: data.connection?.asn || 0,
+-      asn_organization: data.connection?.isp || '',
+-      longitude: data.longitude || 0,
+-      latitude: data.latitude || 0,
+-      timezone: data.timezone?.id || '',
+-    }),
+-  },
+-  {
+-    url: 'https://ip.api.skk.moe/cf-geoip',
+-    mapping: (data) => ({
+-      ip: data.ip || '',
+-      country_code: data.country || '',
+-      country: data.country || '',
+-      region: data.region || '',
+-      city: data.city || '',
+-      organization: data.asOrg || '',
+-      asn: data.asn || 0,
+-      asn_organization: data.asOrg || '',
+-      longitude: data.longitude || 0,
+-      latitude: data.latitude || 0,
+-      timezone: data.timezone || '',
+-    }),
+-  },
+-  {
+-    url: 'https://get.geojs.io/v1/ip/geo.json',
++    url: 'https://my.ippure.com/v1/info',
+     mapping: (data) => ({
+       ip: data.ip || '',
+-      country_code: data.country_code || '',
++      country_code: data.countryCode || '',
+       country: data.country || '',
+       region: data.region || '',
+       city: data.city || '',
+-      organization: data.organization_name || '',
++      organization: data.asOrganization || '',
+       asn: data.asn || 0,
+-      asn_organization: data.organization_name || '',
++      asn_organization: data.asOrganization || '',
+       longitude: Number(data.longitude) || 0,
+       latitude: Number(data.latitude) || 0,
+       timezone: data.timezone || '',
++      fraudScore:
++        typeof data.fraudScore === 'number' &&
++        Number.isFinite(data.fraudScore)
++          ? data.fraudScore
++          : undefined,
+     }),
+   },
+ ]
+@@ -146,14 +86,11 @@ export const getIpInfo = async (): Promise<
+   const maxRetries = 2
+   const serviceTimeout = 5000
+ 
+-  const shuffledServices = IP_CHECK_SERVICES.slice().sort(
+-    () => Math.random() - 0.5,
+-  )
+   let lastError: unknown | null = null
+   const userAgent = await getUserAgentPromise()
+   console.debug('User-Agent for IP detection:', userAgent)
+ 
+-  for (const service of shuffledServices) {
++  for (const service of IP_CHECK_SERVICES) {
+     debugLog(`尝试IP检测服务: ${service.url}`)
+ 
+     const timeoutController = new AbortController()
+@@ -183,7 +120,7 @@ export const getIpInfo = async (): Promise<
+             )
+           }
+ 
+-          let data: any
++          let data: IpPureResponse
+           try {
+             data = await response.json()
+           } catch {
+diff --git a/src/types/generated/i18n-keys.ts b/src/types/generated/i18n-keys.ts
+index f179663..f178679 100644
+--- a/src/types/generated/i18n-keys.ts
++++ b/src/types/generated/i18n-keys.ts
+@@ -71,6 +71,7 @@ export const translationKeys = [
+   'home.components.ipInfo.labels.org',
+   'home.components.ipInfo.labels.location',
+   'home.components.ipInfo.labels.timezone',
++  'home.components.ipInfo.labels.riskScore',
+   'home.components.ipInfo.labels.autoRefresh',
+   'home.components.ipInfo.labels.unknown',
+   'home.components.ipInfo.errors.load',
+@@ -939,6 +940,7 @@ export const translationKeys = [
+   'tests.statuses.test.yes',
+   'tests.statuses.test.no',
+   'tests.statuses.test.failed',
++  'tests.statuses.test.risky',
+   'tests.statuses.test.completed',
+   'tests.statuses.test.disallowedIsp',
+   'tests.statuses.test.originalsOnly',
+diff --git a/src/types/generated/i18n-resources.ts b/src/types/generated/i18n-resources.ts
+index 9915c7d..b8c3d3a 100644
+--- a/src/types/generated/i18n-resources.ts
++++ b/src/types/generated/i18n-resources.ts
+@@ -102,6 +102,7 @@ export interface TranslationResources {
+             isp: string
+             location: string
+             org: string
++            riskScore: string
+             timezone: string
+             unknown: string
+           }
+@@ -1589,6 +1590,7 @@ export interface TranslationResources {
+           noDisney: string
+           originalsOnly: string
+           pending: string
++          risky: string
+           unsupportedRegion: string
+           yes: string
+         }
