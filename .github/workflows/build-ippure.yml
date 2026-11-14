@@ -62,9 +62,11 @@ jobs:
           $installerPath = Join-Path $temporaryRoot 'Clash.Verge_2.5.10_x64-setup.exe'
           $extractPath = Join-Path $temporaryRoot 'extracted'
           $sidecarPath = Join-Path $PWD 'src-tauri/sidecar'
+          $resourcePath = Join-Path $PWD 'src-tauri/resources'
           New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
           New-Item -ItemType Directory -Path $extractPath -Force | Out-Null
           New-Item -ItemType Directory -Path $sidecarPath -Force | Out-Null
+          New-Item -ItemType Directory -Path $resourcePath -Force | Out-Null
 
           $sevenZipCommand = Get-Command '7z.exe' -ErrorAction SilentlyContinue
           $sevenZipPath = if ($sevenZipCommand) { $sevenZipCommand.Source } else { $null }
@@ -113,16 +115,16 @@ jobs:
           )
 
           $verifiedCores = foreach ($core in $expectedCores) {
-            $matches = @(Get-ChildItem -LiteralPath $extractPath -Filter $core.SourceName -File -Recurse -ErrorAction Stop)
-            if ($matches.Count -ne 1) {
-              throw "Expected exactly one $($core.SourceName) in the extracted installer; found $($matches.Count)."
+            $coreFiles = @(Get-ChildItem -LiteralPath $extractPath -Filter $core.SourceName -File -Recurse -ErrorAction Stop)
+            if ($coreFiles.Count -ne 1) {
+              throw "Expected exactly one $($core.SourceName) in the extracted installer; found $($coreFiles.Count)."
             }
-            $actualHash = (Get-FileHash -LiteralPath $matches[0].FullName -Algorithm SHA256).Hash
+            $actualHash = (Get-FileHash -LiteralPath $coreFiles[0].FullName -Algorithm SHA256).Hash
             if ($actualHash -cne $core.Sha256) {
               throw "SHA-256 mismatch for $($core.SourceName): expected $($core.Sha256), got $actualHash."
             }
             [pscustomobject]@{
-              SourcePath = $matches[0].FullName
+              SourcePath = $coreFiles[0].FullName
               TargetPath = Join-Path $sidecarPath $core.TargetName
               SourceName = $core.SourceName
               Sha256 = $core.Sha256
@@ -136,6 +138,51 @@ jobs:
               throw "SHA-256 mismatch after staging $($core.SourceName): expected $($core.Sha256), got $copiedHash."
             }
             Write-Host "Verified and staged $($core.SourceName): $copiedHash"
+          }
+
+          $expectedResources = @(
+            @{
+              FileName = 'Country.mmdb'
+              Sha256 = 'F604D54EB3D5A6FDAB9747C0C62F0B489134B6D94DF9E9EB20F1C5E2A537DBFA'
+            },
+            @{
+              FileName = 'ASN.mmdb'
+              Sha256 = '3169B9EA7DAD762F6837B95408DADC1173F47BE33BE2D83B6C90E67A57A7EB2E'
+            },
+            @{
+              FileName = 'geoip.dat'
+              Sha256 = '06C1D50D0013AF57FFE78C5AF93F0DC6AA998890F3EE231393816F9117810C4A'
+            },
+            @{
+              FileName = 'geosite.dat'
+              Sha256 = '3FEE9B84EFCE1EF142974A18B48B9B12D2CF8CCB8017DD4EC16E3906BCB7DA69'
+            }
+          )
+
+          $verifiedResources = foreach ($resource in $expectedResources) {
+            $resourceFiles = @(Get-ChildItem -LiteralPath $extractPath -Filter $resource.FileName -File -Recurse -ErrorAction Stop)
+            if ($resourceFiles.Count -ne 1) {
+              throw "Expected exactly one $($resource.FileName) in the extracted installer; found $($resourceFiles.Count)."
+            }
+            $actualHash = (Get-FileHash -LiteralPath $resourceFiles[0].FullName -Algorithm SHA256).Hash
+            if ($actualHash -cne $resource.Sha256) {
+              throw "SHA-256 mismatch for $($resource.FileName): expected $($resource.Sha256), got $actualHash."
+            }
+            [pscustomobject]@{
+              SourcePath = $resourceFiles[0].FullName
+              TargetPath = Join-Path $resourcePath $resource.FileName
+              FileName = $resource.FileName
+              Sha256 = $resource.Sha256
+            }
+          }
+
+          foreach ($resource in $verifiedResources) {
+            Copy-Item -LiteralPath $resource.SourcePath -Destination $resource.TargetPath -Force
+            $copiedHash = (Get-FileHash -LiteralPath $resource.TargetPath -Algorithm SHA256).Hash
+            if ($copiedHash -cne $resource.Sha256) {
+              throw "SHA-256 mismatch after staging $($resource.FileName): expected $($resource.Sha256), got $copiedHash."
+            }
+            Write-Host "Verified and staged $($resource.FileName): $copiedHash"
           }
 
       - name: Prepare Windows resources
