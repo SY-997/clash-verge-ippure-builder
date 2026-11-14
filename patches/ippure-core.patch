@@ -1,5 +1,5 @@
 diff --git a/src/components/home/ip-info-card.tsx b/src/components/home/ip-info-card.tsx
-index 6df77a1..53dae5d 100644
+index 6df77a1..1f48c82 100644
 --- a/src/components/home/ip-info-card.tsx
 +++ b/src/components/home/ip-info-card.tsx
 @@ -342,6 +342,14 @@ export const IpInfoCard = () => {
@@ -17,183 +17,272 @@ index 6df77a1..53dae5d 100644
              </Box>
  
              <Box sx={{ width: '60%', overflow: 'auto' }}>
+@@ -363,6 +371,30 @@ export const IpInfoCard = () => {
+                 label={t('home.components.ipInfo.labels.timezone')}
+                 value={ipInfo?.timezone}
+               />
++              <InfoItem
++                label={t('home.components.ipInfo.labels.isResidential')}
++                value={
++                  typeof ipInfo?.isResidential === 'boolean'
++                    ? t(
++                        ipInfo.isResidential
++                          ? 'home.components.ipInfo.labels.yes'
++                          : 'home.components.ipInfo.labels.no',
++                      )
++                    : t('home.components.ipInfo.labels.unknown')
++                }
++              />
++              <InfoItem
++                label={t('home.components.ipInfo.labels.isBroadcast')}
++                value={
++                  typeof ipInfo?.isBroadcast === 'boolean'
++                    ? t(
++                        ipInfo.isBroadcast
++                          ? 'home.components.ipInfo.labels.yes'
++                          : 'home.components.ipInfo.labels.no',
++                      )
++                    : t('home.components.ipInfo.labels.unknown')
++                }
++              />
+             </Box>
+           </Box>
+ 
 diff --git a/src/locales/ar/home.json b/src/locales/ar/home.json
-index 4bf0359..35d9fe3 100644
+index 4bf0359..d2bcbdc 100644
 --- a/src/locales/ar/home.json
 +++ b/src/locales/ar/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "Location",
          "timezone": "Timezone",
 +        "riskScore": "درجة المخاطر",
++        "isResidential": "IP سكني",
++        "isBroadcast": "IP مُعلن",
++        "yes": "نعم",
++        "no": "لا",
          "autoRefresh": "Auto refresh",
          "unknown": "Unknown"
        },
 diff --git a/src/locales/de/home.json b/src/locales/de/home.json
-index 4bcaf99..808a619 100644
+index 4bcaf99..8ccd546 100644
 --- a/src/locales/de/home.json
 +++ b/src/locales/de/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "Organisation",
          "location": "Standort",
          "timezone": "Zeitzone",
 +        "riskScore": "Risikowert",
++        "isResidential": "Residential-IP",
++        "isBroadcast": "Broadcast-IP",
++        "yes": "Ja",
++        "no": "Nein",
          "autoRefresh": "Automatische Aktualisierung",
          "unknown": "Unbekannt"
        },
 diff --git a/src/locales/en/home.json b/src/locales/en/home.json
-index e4ec3b6..a2ae51c 100644
+index e4ec3b6..9a8ef68 100644
 --- a/src/locales/en/home.json
 +++ b/src/locales/en/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "Location",
          "timezone": "Timezone",
 +        "riskScore": "Risk score",
++        "isResidential": "Residential IP",
++        "isBroadcast": "Broadcast IP",
++        "yes": "Yes",
++        "no": "No",
          "autoRefresh": "Auto refresh",
          "unknown": "Unknown"
        },
 diff --git a/src/locales/es/home.json b/src/locales/es/home.json
-index 5c36116..2748e8f 100644
+index 5c36116..9ac682f 100644
 --- a/src/locales/es/home.json
 +++ b/src/locales/es/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "Organización",
          "location": "Ubicación",
          "timezone": "Zona horaria",
 +        "riskScore": "Puntuación de riesgo",
++        "isResidential": "IP residencial",
++        "isBroadcast": "IP anunciado",
++        "yes": "Sí",
++        "no": "No",
          "autoRefresh": "Actualización automática",
          "unknown": "Desconocido"
        },
 diff --git a/src/locales/fa/home.json b/src/locales/fa/home.json
-index 468522a..04ef4c4 100644
+index 468522a..d259a9b 100644
 --- a/src/locales/fa/home.json
 +++ b/src/locales/fa/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "Location",
          "timezone": "Timezone",
 +        "riskScore": "امتیاز ریسک",
++        "isResidential": "IP مسکونی",
++        "isBroadcast": "IP اعلان‌شده",
++        "yes": "بله",
++        "no": "خیر",
          "autoRefresh": "Auto refresh",
          "unknown": "Unknown"
        },
 diff --git a/src/locales/id/home.json b/src/locales/id/home.json
-index 5bfb7dc..3cf332e 100644
+index 5bfb7dc..0f51e50 100644
 --- a/src/locales/id/home.json
 +++ b/src/locales/id/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "Location",
          "timezone": "Timezone",
 +        "riskScore": "Skor risiko",
++        "isResidential": "IP residensial",
++        "isBroadcast": "IP yang diumumkan",
++        "yes": "Ya",
++        "no": "Tidak",
          "autoRefresh": "Auto refresh",
          "unknown": "Unknown"
        },
 diff --git a/src/locales/jp/home.json b/src/locales/jp/home.json
-index 96f8b42..a7facdc 100644
+index 96f8b42..849e474 100644
 --- a/src/locales/jp/home.json
 +++ b/src/locales/jp/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "組織",
          "location": "位置",
          "timezone": "タイムゾーン",
 +        "riskScore": "リスク値",
++        "isResidential": "住宅IP",
++        "isBroadcast": "ブロードキャストIP",
++        "yes": "はい",
++        "no": "いいえ",
          "autoRefresh": "自動更新",
          "unknown": "不明"
        },
 diff --git a/src/locales/ko/home.json b/src/locales/ko/home.json
-index d818523..41c2c19 100644
+index d818523..7ae2496 100644
 --- a/src/locales/ko/home.json
 +++ b/src/locales/ko/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "위치",
          "timezone": "시간대",
 +        "riskScore": "위험 점수",
++        "isResidential": "주거용 IP",
++        "isBroadcast": "브로드캐스트 IP",
++        "yes": "예",
++        "no": "아니요",
          "autoRefresh": "자동 새로고침",
          "unknown": "알 수 없음"
        },
 diff --git a/src/locales/pt/home.json b/src/locales/pt/home.json
-index 8df3dcc..7718790 100644
+index 8df3dcc..09e1bc3 100644
 --- a/src/locales/pt/home.json
 +++ b/src/locales/pt/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "Localização",
          "timezone": "Fuso horário",
 +        "riskScore": "Pontuação de risco",
++        "isResidential": "IP residencial",
++        "isBroadcast": "IP anunciado",
++        "yes": "Sim",
++        "no": "Não",
          "autoRefresh": "Atualização automática",
          "unknown": "Desconhecido"
        },
 diff --git a/src/locales/ru/home.json b/src/locales/ru/home.json
-index d46e3d2..2b8387d 100644
+index d46e3d2..7ab2315 100644
 --- a/src/locales/ru/home.json
 +++ b/src/locales/ru/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "Организация",
          "location": "Местоположение",
          "timezone": "Часовой пояс",
 +        "riskScore": "Оценка риска",
++        "isResidential": "Резидентский IP",
++        "isBroadcast": "Анонсируемый IP",
++        "yes": "Да",
++        "no": "Нет",
          "autoRefresh": "Автообновление через",
          "unknown": "Неизвестно"
        },
 diff --git a/src/locales/tr/home.json b/src/locales/tr/home.json
-index 845b2e9..e1fe983 100644
+index 845b2e9..9c4f1bb 100644
 --- a/src/locales/tr/home.json
 +++ b/src/locales/tr/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "Kuruluş",
          "location": "Konum",
          "timezone": "Saat Dilimi",
 +        "riskScore": "Risk puanı",
++        "isResidential": "Konut IP'si",
++        "isBroadcast": "Duyurulan IP",
++        "yes": "Evet",
++        "no": "Hayır",
          "autoRefresh": "Otomatik yenile",
          "unknown": "Bilinmiyor"
        },
 diff --git a/src/locales/tt/home.json b/src/locales/tt/home.json
-index b04be2a..bdbeb8d 100644
+index b04be2a..bcc20e8 100644
 --- a/src/locales/tt/home.json
 +++ b/src/locales/tt/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "ORG",
          "location": "Location",
          "timezone": "Timezone",
 +        "riskScore": "Риск бәясе",
++        "isResidential": "Торак IP",
++        "isBroadcast": "Анонсланган IP",
++        "yes": "Әйе",
++        "no": "Юк",
          "autoRefresh": "Auto refresh",
          "unknown": "Unknown"
        },
 diff --git a/src/locales/zh/home.json b/src/locales/zh/home.json
-index dd73294..cdc64eb 100644
+index dd73294..8434116 100644
 --- a/src/locales/zh/home.json
 +++ b/src/locales/zh/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "组织",
          "location": "位置",
          "timezone": "时区",
 +        "riskScore": "风险值",
++        "isResidential": "住宅 IP",
++        "isBroadcast": "广播 IP",
++        "yes": "是",
++        "no": "否",
          "autoRefresh": "自动刷新",
          "unknown": "未知"
        },
 diff --git a/src/locales/zhtw/home.json b/src/locales/zhtw/home.json
-index 3c7c4be..1cde1ef 100644
+index 3c7c4be..5d40617 100644
 --- a/src/locales/zhtw/home.json
 +++ b/src/locales/zhtw/home.json
-@@ -79,6 +79,7 @@
+@@ -79,6 +79,11 @@
          "org": "組織",
          "location": "位置",
          "timezone": "時區",
 +        "riskScore": "風險值",
++        "isResidential": "住宅 IP",
++        "isBroadcast": "廣播 IP",
++        "yes": "是",
++        "no": "否",
          "autoRefresh": "自動重整",
          "unknown": "未知"
        },
 diff --git a/src/services/api.ts b/src/services/api.ts
-index b7f6641..d75fed2 100644
+index b7f6641..6ff9d77 100644
 --- a/src/services/api.ts
 +++ b/src/services/api.ts
-@@ -29,111 +29,51 @@ interface IpInfo {
+@@ -29,111 +29,61 @@ interface IpInfo {
    longitude: number
    latitude: number
    timezone: string
 +  fraudScore?: number
++  isResidential?: boolean
++  isBroadcast?: boolean
 +}
 +
 +interface IpPureResponse {
@@ -208,6 +297,8 @@ index b7f6641..d75fed2 100644
 +  latitude?: string | number | null
 +  timezone?: string
 +  fraudScore?: number | null
++  isResidential?: boolean | null
++  isBroadcast?: boolean | null
  }
  
  // IP检测服务配置
@@ -324,10 +415,16 @@ index b7f6641..d75fed2 100644
 +        Number.isFinite(data.fraudScore)
 +          ? data.fraudScore
 +          : undefined,
++      isResidential:
++        typeof data.isResidential === 'boolean'
++          ? data.isResidential
++          : undefined,
++      isBroadcast:
++        typeof data.isBroadcast === 'boolean' ? data.isBroadcast : undefined,
      }),
    },
  ]
-@@ -146,14 +86,11 @@ export const getIpInfo = async (): Promise<
+@@ -146,14 +96,11 @@ export const getIpInfo = async (): Promise<
    const maxRetries = 2
    const serviceTimeout = 5000
  
@@ -343,7 +440,7 @@ index b7f6641..d75fed2 100644
      debugLog(`尝试IP检测服务: ${service.url}`)
  
      const timeoutController = new AbortController()
-@@ -183,7 +120,7 @@ export const getIpInfo = async (): Promise<
+@@ -183,7 +130,7 @@ export const getIpInfo = async (): Promise<
              )
            }
  
@@ -353,18 +450,22 @@ index b7f6641..d75fed2 100644
              data = await response.json()
            } catch {
 diff --git a/src/types/generated/i18n-keys.ts b/src/types/generated/i18n-keys.ts
-index f179663..f178679 100644
+index f179663..2dae84f 100644
 --- a/src/types/generated/i18n-keys.ts
 +++ b/src/types/generated/i18n-keys.ts
-@@ -71,6 +71,7 @@ export const translationKeys = [
+@@ -71,6 +71,11 @@ export const translationKeys = [
    'home.components.ipInfo.labels.org',
    'home.components.ipInfo.labels.location',
    'home.components.ipInfo.labels.timezone',
 +  'home.components.ipInfo.labels.riskScore',
++  'home.components.ipInfo.labels.isResidential',
++  'home.components.ipInfo.labels.isBroadcast',
++  'home.components.ipInfo.labels.yes',
++  'home.components.ipInfo.labels.no',
    'home.components.ipInfo.labels.autoRefresh',
    'home.components.ipInfo.labels.unknown',
    'home.components.ipInfo.errors.load',
-@@ -939,6 +940,7 @@ export const translationKeys = [
+@@ -939,6 +944,7 @@ export const translationKeys = [
    'tests.statuses.test.yes',
    'tests.statuses.test.no',
    'tests.statuses.test.failed',
@@ -373,18 +474,27 @@ index f179663..f178679 100644
    'tests.statuses.test.disallowedIsp',
    'tests.statuses.test.originalsOnly',
 diff --git a/src/types/generated/i18n-resources.ts b/src/types/generated/i18n-resources.ts
-index 9915c7d..b8c3d3a 100644
+index 9915c7d..ac5fb5f 100644
 --- a/src/types/generated/i18n-resources.ts
 +++ b/src/types/generated/i18n-resources.ts
-@@ -102,6 +102,7 @@ export interface TranslationResources {
+@@ -99,11 +99,16 @@ export interface TranslationResources {
+             asn: string
+             autoRefresh: string
+             ip: string
++            isBroadcast: string
              isp: string
++            isResidential: string
              location: string
++            no: string
              org: string
 +            riskScore: string
              timezone: string
              unknown: string
++            yes: string
            }
-@@ -1589,6 +1590,7 @@ export interface TranslationResources {
+           title: string
+         }
+@@ -1589,6 +1594,7 @@ export interface TranslationResources {
            noDisney: string
            originalsOnly: string
            pending: string
